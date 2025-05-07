@@ -40,6 +40,22 @@
             </div>
             {% endif %}
 
+            <!-- Chat Interface Section -->
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Chat Interface</h5>
+                </div>
+                <div class="card-body">
+                    <div class="chat-messages" id="chatMessages" style="height: 300px; overflow-y: auto; margin-bottom: 1rem; padding: 1rem; background-color: #f8f9fa; border-radius: 4px;">
+                        <!-- Chat messages will appear here -->
+                    </div>
+                    <form id="chatForm" class="d-flex">
+                        <input type="text" id="chatInput" class="form-control me-2" placeholder="Type your message..." style="flex-grow: 1;">
+                        <button type="submit" class="button">Send</button>
+                    </form>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Example Queries</h5>
@@ -87,6 +103,35 @@ document.addEventListener('DOMContentLoaded', function() {
                     cm.replaceSelection('    ', 'end');
                 }
             }
+        }
+    });
+
+    // Chat interface functionality
+    const chatForm = document.getElementById('chatForm');
+    const chatInput = document.getElementById('chatInput');
+    const chatMessages = document.getElementById('chatMessages');
+
+    chatForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const message = chatInput.value.trim();
+        if (message) {
+            // Add user message to chat
+            const userMessageDiv = document.createElement('div');
+            userMessageDiv.className = 'mb-2';
+            userMessageDiv.innerHTML = `
+                <div class="d-flex justify-content-end">
+                    <div class="bg-primary text-white p-2 rounded" style="max-width: 70%;">
+                        ${message}
+                    </div>
+                </div>
+            `;
+            chatMessages.appendChild(userMessageDiv);
+            
+            // Clear input
+            chatInput.value = '';
+            
+            // Scroll to bottom
+            chatMessages.scrollTop = chatMessages.scrollHeight;
         }
     });
 });
