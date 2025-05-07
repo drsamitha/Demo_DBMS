@@ -1,0 +1,108 @@
+{% extends "db_connections/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>ORM Console</h2>
+                <div>
+                    <a href="{% url 'home' %}" class="button me-2">Back to Home</a>
+                    <button class="button" onclick="copyToClipboard()">Copy Code</button>
+                </div>
+            </div>
+
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label for="orm_code" class="mb-0">Python Code</label>
+                        <small class="text-muted">Write your ORM queries here</small>
+                    </div>
+                    <div class="editor-container">
+                        <textarea name="orm_code" id="orm_code">{{ orm_code }}</textarea>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <button type="submit" class="button">Execute Code</button>
+                    <a href="{% url 'view_models' %}" class="button">View Models</a>
+                </div>
+            </form>
+
+            {% if result %}
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Result</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="code-block">{{ result }}</pre>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="card">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Example Queries</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="code-block"># List all records
+Model.objects.all()
+
+# Filter records
+Model.objects.filter(field='value')
+
+# Create a new record
+Model.objects.create(field='value')
+
+# Update records
+Model.objects.filter(field='value').update(new_field='new_value')
+
+# Delete records
+Model.objects.filter(field='value').delete()</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var editor = CodeMirror.fromTextArea(document.getElementById('orm_code'), {
+        mode: 'python',
+        theme: 'monokai',
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        foldGutter: true,
+        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        extraKeys: {
+            'Tab': function(cm) {
+                if (cm.somethingSelected()) {
+                    cm.indentSelection('add');
+                } else {
+                    cm.replaceSelection('    ', 'end');
+                }
+            }
+        }
+    });
+});
+
+function copyToClipboard() {
+    var editor = document.querySelector('.CodeMirror').CodeMirror;
+    var text = editor.getValue();
+    
+    navigator.clipboard.writeText(text).then(function() {
+        var button = document.querySelector('.button');
+        var originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(function() {
+            button.textContent = originalText;
+        }, 2000);
+    });
+}
+</script>
+{% endblock %}

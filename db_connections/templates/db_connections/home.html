@@ -1,0 +1,107 @@
+{% extends "db_connections/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="welcome-section mb-5">
+                <h1 class="display-4 mb-3">Database Management System</h1>
+                <p class="lead text-muted">Manage your database connections and execute ORM queries with ease</p>
+            </div>
+
+            <div class="row">
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-code me-2"></i>
+                                Database Models
+                            </h5>
+                            <p class="card-text text-muted">View and explore your database models</p>
+                            <a href="{% url 'view_models' %}" class="button">View Models</a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-6 mb-4">
+                    <div class="card h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-cog me-2"></i>
+                                Database Settings
+                            </h5>
+                            <p class="card-text text-muted">Configure your database settings and run migrations</p>
+                            <a href="{% url 'edit_database_settings' %}" class="button">Configure Settings</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {% if selected_db %}
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="fas fa-terminal me-2"></i>
+                                Quick Access
+                            </h5>
+                            <p class="card-text text-muted">Currently selected database: <strong>{{ selected_db }}</strong></p>
+                            <a href="{% url 'orm_console' %}" class="button">Open ORM Console</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .welcome-section {
+        text-align: center;
+        padding: 2rem 0;
+    }
+    .card {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        transition: transform 0.2s ease-in-out;
+    }
+    .card:hover {
+        transform: translateY(-5px);
+    }
+    .card-title {
+        color: #2c3e50;
+        font-weight: 600;
+        margin-bottom: 1rem;
+    }
+    .card-text {
+        margin-bottom: 1.5rem;
+    }
+    .button {
+        display: inline-block;
+        padding: 10px 20px;
+        background-color: #007bff;
+        color: white;
+        text-decoration: none;
+        border-radius: 5px;
+        transition: background-color 0.2s ease-in-out;
+    }
+    .button:hover {
+        background-color: #0056b3;
+        color: white;
+        text-decoration: none;
+    }
+    .display-4 {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+    .lead {
+        font-size: 1.2rem;
+    }
+</style>
+
+<!-- Add Font Awesome for icons -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+{% endblock %} 

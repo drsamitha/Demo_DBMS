@@ -1,0 +1,123 @@
+{% extends "db_connections/base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Database Settings</h2>
+                <div>
+                    <a href="{% url 'home' %}" class="button me-2">Back to Home</a>
+                    <button class="button" onclick="copyToClipboard()">Copy Code</button>
+                </div>
+            </div>
+
+            <form method="post" class="mb-4">
+                {% csrf_token %}
+                <div class="form-group">
+                    <div class="d-flex justify-content-between align-items-center mb-2">
+                        <label for="db_config" class="mb-0">settings.py - DATABASES Configuration</label>
+                        <small class="text-muted">Edit your database configuration</small>
+                    </div>
+                    <div class="editor-container">
+                        <textarea name="db_config" id="db_config">{{ db_config }}</textarea>
+                    </div>
+                </div>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <button type="submit" class="button me-2">Save Changes</button>
+                        <a href="{% url 'run_migrations' %}" class="button">Run Migrations</a>
+                    </div>
+                    <a href="{% url 'inspect_db' %}" class="button">Inspect Database</a>
+                </div>
+            </form>
+
+            <div class="card mb-4">
+                <div class="card-header bg-light">
+                    <h5 class="mb-0">Example Configuration</h5>
+                </div>
+                <div class="card-body">
+                    <pre class="code-block">DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": BASE_DIR / "db.sqlite3",
+        "ATOMIC_REQUESTS": False,
+        "AUTOCOMMIT": True,
+        "CONN_MAX_AGE": 0,
+        "CONN_HEALTH_CHECKS": False,
+        "OPTIONS": {}
+    },
+    "postgres": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": "your_database",
+        "USER": "your_username",
+        "PASSWORD": "your_password",
+        "HOST": "localhost",
+        "PORT": "5432",
+        "ATOMIC_REQUESTS": False,
+        "AUTOCOMMIT": True,
+        "CONN_MAX_AGE": 0,
+        "CONN_HEALTH_CHECKS": False,
+        "OPTIONS": {}
+    },
+    "mysql": {
+        "ENGINE": "django.db.backends.mysql",
+        "NAME": "your_database",
+        "USER": "your_username",
+        "PASSWORD": "your_password",
+        "HOST": "localhost",
+        "PORT": "3306",
+        "ATOMIC_REQUESTS": False,
+        "AUTOCOMMIT": True,
+        "CONN_MAX_AGE": 0,
+        "CONN_HEALTH_CHECKS": False,
+        "OPTIONS": {}
+    }
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var editor = CodeMirror.fromTextArea(document.getElementById('db_config'), {
+        mode: 'python',
+        theme: 'monokai',
+        lineNumbers: true,
+        indentUnit: 4,
+        tabSize: 4,
+        indentWithTabs: false,
+        lineWrapping: true,
+        matchBrackets: true,
+        autoCloseBrackets: true,
+        foldGutter: true,
+        gutters: ['CodeMirror-linenumbers', 'CodeMirror-foldgutter'],
+        extraKeys: {
+            'Tab': function(cm) {
+                if (cm.somethingSelected()) {
+                    cm.indentSelection('add');
+                } else {
+                    cm.replaceSelection('    ', 'end');
+                }
+            }
+        }
+    });
+});
+
+function copyToClipboard() {
+    var editor = document.querySelector('.CodeMirror').CodeMirror;
+    var text = editor.getValue();
+    
+    navigator.clipboard.writeText(text).then(function() {
+        var button = document.querySelector('.button');
+        var originalText = button.textContent;
+        button.textContent = 'Copied!';
+        setTimeout(function() {
+            button.textContent = originalText;
+        }, 2000);
+    });
+}
+</script>
+{% endblock %} 
