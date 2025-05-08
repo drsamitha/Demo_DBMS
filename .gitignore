@@ -11,7 +11,7 @@ db_connections/migrations
 #py cache
 *.py[cod]
 *$py.class
-
+*/__pycache__/*
 
 #django migrations
 */migrations/*.py
