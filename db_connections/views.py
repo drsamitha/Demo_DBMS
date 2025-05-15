@@ -395,6 +395,10 @@ def get_django_field_type(db_type):
 
 def home(request):
     """Displays the home page with quick access to main features."""
+    # Set default database if none is selected
+    if not request.session.get('selected_db'):
+        request.session['selected_db'] = 'default'
+    
     selected_db = request.session.get('selected_db')
     return render(request, 'db_connections/home.html', {
         'selected_db': selected_db
