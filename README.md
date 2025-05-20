@@ -6,6 +6,15 @@
 
 A powerful, intuitive web interface for managing database connections, executing ORM queries, and visualizing data with ease.
 
+##  Screenshots
+
+| Screenshot 1 | Screenshot 2 |
+|--------------|--------------|
+| ![n1](https://github.com/smtkanchana66/Demo_DBMS/raw/main/Readme_res/n1.png) | ![n2](https://github.com/smtkanchana66/Demo_DBMS/raw/main/Readme_res/n2.png) |
+
+| Screenshot 3 | Screenshot 4 |
+|--------------|--------------|
+| ![n3](https://github.com/smtkanchana66/Demo_DBMS/raw/main/Readme_res/n3.png) | ![n4](https://github.com/smtkanchana66/Demo_DBMS/raw/main/Readme_res/n4.png) |
 <!-- ![Database Management System Screenshot](/screenshots/dashboard.png) -->
 
 ## Features
