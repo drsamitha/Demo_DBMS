@@ -23,27 +23,57 @@ A powerful, intuitive web interface for managing database connections, executing
 - Git
 
 ### Installation
-
+#### For Linux:-
 1. Clone the repository:
    ```bash
-   git clone https://github.com/yourusername/Demo_DBMS.git
+   git clone https://github.com/drsamitha/Demo_DBMS.git
    cd Demo_DBMS
    ```
    
 2. Create and setup virtual environment (optional but recommended):
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows use: venv\Scripts\activate
    ```
    
 3. Install dependencies from requirements file:
    ```bash
    pip install -r requrements.txt
    ```
-
-4. Setup and start the server using the provided script:
+   
+4. Run the application:
    ```bash
-   bash restart_and_setup.sh
+    python3 ./manage.py makemigrations # (if change data base. must run this code 1)
+    python3 ./manage.py migrate # (if change data base. must run this code 2)
+    python3 ./manage.py runserver
+   ```
+5. Access the application at:
+   ```
+   http://localhost:8000/
+   ```
+   
+#### For Windows:-
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/drsamitha/Demo_DBMS.git
+   cd .\Demo_DBMS\
+   ```
+   
+2. Set Up a Virtual Environment: 
+   ```bash
+    Set-ExecutionPolicy RemoteSigned -Scope CurrentUser
+   .\venv\Scripts\activate
+   ```
+   
+3. Install dependencies from requirements file:
+   ```bash
+   pip3 install -r .\requirements.txt
+   ```
+
+4. Run the application:
+   ```bash
+    python .\manage.py makemigrations (if change data base. must run this code 1)
+    python .\manage.py migrate (if change data base. must run this code 2)
+    python .\manage.py runserver
    ```
 
 5. Access the application at:
