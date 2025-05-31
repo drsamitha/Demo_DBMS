@@ -6,3 +6,4 @@ legacy_cgi
 psycopg2-binary
 mysqlclient #need mysql installed in
 mysql-connector-python
+requests

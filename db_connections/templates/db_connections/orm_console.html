@@ -133,15 +133,31 @@ document.addEventListener('DOMContentLoaded', function() {
             // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
 
-            fetch('/db_connections/send-msg-model', {
+            fetch('/send_message', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
                 },
                 body: JSON.stringify({ message: message })
             })
-
-
+            .then(response => response.json())
+            .then(data => {
+                // Handle the response status from server
+                console.log(data.status);
+                const responseMessageDiv = document.createElement('div');
+                responseMessageDiv.className = 'mb-2';
+                responseMessageDiv.innerHTML = `
+                    <div class="d-flex justify-content-start">
+                        <div class="bg-light text-dark p-2 rounded" style="max-width: 70%;">
+                            ${data.status}
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(responseMessageDiv);
+            })
+            .catch(error => {
+                console.error('Error:', error);
+            });
         }
     });
 });

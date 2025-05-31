@@ -22,6 +22,10 @@ import os
 from io import StringIO
 import sys
 import traceback
+import requests
+from django.views.decorators.csrf import csrf_exempt
+from django.views.decorators.http import require_POST
+
 
 # from .connection_context import *
 
@@ -434,14 +438,22 @@ def view_models(request):
         return redirect('home')
 
 # send user query with model to server
-def send_msg_model(request):
-    if request.method == 'POST':
-        try:
-            data = json.loads(request.body.decode('utf-8'))
-            message = data.get('message')
-            
-            response_data = {'response': f"View received message: '{message}' and processed it successfully."} 
-            return JsonResponse(response_data)
-        except json.JSONDecodeError:
-            return JsonResponse({'error': 'Invalid JSON'}, status=400)
-    return JsonResponse({'error': 'Invalid request method'}, status=405)  
+@csrf_exempt
+@require_POST
+def send_message(request):
+
+    try:
+        data = json.loads(request.body)
+        message = data.get('message')
+
+        external_api_url = os.environ.get('MODEL_API_URL')
+
+        response = requests.post(external_api_url, json={'message': message})
+
+        if response.status_code == 200:
+            return JsonResponse({'status': 'Message sent successfully!'}, status=200)
+        else:
+            return JsonResponse({'status': 'Failed to send message!'}, status=500)
+
+    except Exception as e:
+        return JsonResponse({'status': f'Error: {str(e)}'}, status=500)
