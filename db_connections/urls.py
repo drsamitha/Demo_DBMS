@@ -8,4 +8,5 @@ urlpatterns = [
     path('database-settings/', views.edit_database_settings, name='edit_database_settings'),
     path('inspect-db/', views.inspect_db, name='inspect_db'),
     path('run-migrations/', views.run_migrations, name='run_migrations'),
+    path('send-msg-model', views.send_msg_model, name='send_msg_model'),
 ]

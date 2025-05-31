@@ -428,3 +428,16 @@ def view_models(request):
     except Exception as e:
         messages.error(request, f'Error reading models.py: {str(e)}')
         return redirect('home')
+
+# send user query with model to server
+def send_msg_model(request):
+    if request.method == 'POST':
+        try:
+            data = json.loads(request.body.decode('utf-8'))
+            message = data.get('message')
+            
+            response_data = {'response': f"View received message: '{message}' and processed it successfully."} 
+            return JsonResponse(response_data)
+        except json.JSONDecodeError:
+            return JsonResponse({'error': 'Invalid JSON'}, status=400)
+    return JsonResponse({'error': 'Invalid request method'}, status=405)  

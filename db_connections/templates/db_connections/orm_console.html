@@ -132,6 +132,16 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Scroll to bottom
             chatMessages.scrollTop = chatMessages.scrollHeight;
+
+            fetch('/db_connections/send-msg-model', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ message: message })
+            })
+
+
         }
     });
 });
