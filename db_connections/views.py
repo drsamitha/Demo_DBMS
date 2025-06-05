@@ -441,19 +441,87 @@ def view_models(request):
 @csrf_exempt
 @require_POST
 def send_message(request):
-
     try:
-        data = json.loads(request.body)
-        message = data.get('message')
+        # Parse request body
+        try:
+            data = json.loads(request.body)
+            message = data.get('message')
+            if not message:
+                return JsonResponse({
+                    'status': 'error',
+                    'message': 'No message provided'
+                }, status=400)
+        except json.JSONDecodeError as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid JSON in request: {str(e)}'
+            }, status=400)
+
+        # Read models.py content
+        try:
+            models_path = os.path.join(settings.BASE_DIR, 'db_connections', 'models.py')
+            with open(models_path, 'r') as f:
+                models_content = f.read()
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error reading models.py: {str(e)}'
+            }, status=500)
 
         external_api_url = os.environ.get('MODEL_API_URL')
+        if not external_api_url:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'MODEL_API_URL environment variable not set'
+            }, status=500)
 
-        response = requests.post(external_api_url, json={'message': message})
+        payload = {
+            "instruction": message,
+            "input": models_content,
+            "max_tokens": 128
+        }
 
-        if response.status_code == 200:
-            return JsonResponse({'status': 'Message sent successfully!'}, status=200)
-        else:
-            return JsonResponse({'status': 'Failed to send message!'}, status=500)
+        try:
+            response = requests.post(external_api_url, json=payload)
+            response.raise_for_status()
+        except requests.exceptions.RequestException as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error calling external API: {str(e)}'
+            }, status=500)
+
+        try:
+            model_response = response.json()
+        except json.JSONDecodeError as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Invalid JSON response from external API: {str(e)}'
+            }, status=500)
+
+        # Extract the generated code from the response
+        try:
+            if isinstance(model_response, dict) and 'data' in model_response:
+                if isinstance(model_response['data'], list):
+                    generated_code = model_response['data'][0]
+                elif isinstance(model_response['data'], dict) and 'output' in model_response['data']:
+                    generated_code = model_response['data']['output']
+                else:
+                    generated_code = str(model_response['data'])
+            else:
+                generated_code = str(model_response)
+
+            return JsonResponse({
+                'status': 'success',
+                'message': generated_code
+            }, status=200)
+        except Exception as e:
+            return JsonResponse({
+                'status': 'error',
+                'message': f'Error processing API response: {str(e)}'
+            }, status=500)
 
     except Exception as e:
-        return JsonResponse({'status': f'Error: {str(e)}'}, status=500)
+        return JsonResponse({
+            'status': 'error',
+            'message': f'Unexpected error: {str(e)}'
+        }, status=500)

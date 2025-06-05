@@ -110,7 +110,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const chatForm = document.getElementById('chatForm');
     const chatInput = document.getElementById('chatInput');
     const chatMessages = document.getElementById('chatMessages');
-
+    
     chatForm.addEventListener('submit', function(e) {
         e.preventDefault();
         const message = chatInput.value.trim();
@@ -137,26 +137,74 @@ document.addEventListener('DOMContentLoaded', function() {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
+                    'Accept': 'application/json'
                 },
                 body: JSON.stringify({ message: message })
             })
-            .then(response => response.json())
+            .then(response => {
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                return response.text().then(text => {
+                    try {
+                        return text ? JSON.parse(text) : {};
+                    } catch (e) {
+                        console.error('JSON Parse Error:', e);
+                        console.error('Response text:', text);
+                        throw new Error('Invalid JSON response from server');
+                    }
+                });
+            })
             .then(data => {
-                // Handle the response status from server
-                console.log(data.status);
-                const responseMessageDiv = document.createElement('div');
-                responseMessageDiv.className = 'mb-2';
-                responseMessageDiv.innerHTML = `
-                    <div class="d-flex justify-content-start">
-                        <div class="bg-light text-dark p-2 rounded" style="max-width: 70%;">
-                            ${data.status}
+                console.log('Received data:', data);  // Debug log
+                if (data.status === 'success' && (data.message || data.generated_code)) {
+                    // Extract the content from either message or generated_code
+                    const messageContent = data.generated_code || data.message;
+                    
+                    // Add response to chat
+                    const responseMessageDiv = document.createElement('div');
+                    responseMessageDiv.className = 'mb-2';
+                    responseMessageDiv.innerHTML = `
+                        <div class="d-flex justify-content-start">
+                            <div class="bg-light text-dark p-2 rounded" style="max-width: 70%;">
+                                <pre class="mb-0">${messageContent}</pre>
+                            </div>
                         </div>
-                    </div>
-                `;
-                chatMessages.appendChild(responseMessageDiv);
+                    `;
+                    chatMessages.appendChild(responseMessageDiv);
+
+                    // Set the code in the editor
+                    editor.setValue(messageContent);
+                    
+                    // Scroll to bottom
+                    chatMessages.scrollTop = chatMessages.scrollHeight;
+                } else {
+                    // Handle error response
+                    const errorMessageDiv = document.createElement('div');
+                    errorMessageDiv.className = 'mb-2';
+                    errorMessageDiv.innerHTML = `
+                        <div class="d-flex justify-content-start">
+                            <div class="bg-danger text-white p-2 rounded" style="max-width: 70%;">
+                                Error: ${data.message || 'Unknown error occurred'}
+                            </div>
+                        </div>
+                    `;
+                    chatMessages.appendChild(errorMessageDiv);
+                }
             })
             .catch(error => {
                 console.error('Error:', error);
+                // Add error message to chat
+                const errorMessageDiv = document.createElement('div');
+                errorMessageDiv.className = 'mb-2';
+                errorMessageDiv.innerHTML = `
+                    <div class="d-flex justify-content-start">
+                        <div class="bg-danger text-white p-2 rounded" style="max-width: 70%;">
+                            Error: ${error.message || 'Failed to get response from server'}
+                        </div>
+                    </div>
+                `;
+                chatMessages.appendChild(errorMessageDiv);
             });
         }
     });
