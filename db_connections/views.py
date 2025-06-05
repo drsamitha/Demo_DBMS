@@ -25,6 +25,7 @@ import traceback
 import requests
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from gradio_client import Client
 
 
 # from .connection_context import *
@@ -442,7 +443,6 @@ def view_models(request):
 @require_POST
 def send_message(request):
     try:
-        # Parse request body
         try:
             data = json.loads(request.body)
             message = data.get('message')
@@ -456,6 +456,13 @@ def send_message(request):
                 'status': 'error',
                 'message': f'Invalid JSON in request: {str(e)}'
             }, status=400)
+        
+        gradio_url = os.environ.get('MODEL_API_URL')
+        if not gradio_url:
+            return JsonResponse({
+                'status': 'error',
+                'message': 'MODEL_API_URL environment variable not set'
+            }, status=500)
 
         # Read models.py content
         try:
@@ -468,56 +475,26 @@ def send_message(request):
                 'message': f'Error reading models.py: {str(e)}'
             }, status=500)
 
-        external_api_url = os.environ.get('MODEL_API_URL')
-        if not external_api_url:
-            return JsonResponse({
-                'status': 'error',
-                'message': 'MODEL_API_URL environment variable not set'
-            }, status=500)
-
-        payload = {
-            "instruction": message,
-            "input": models_content,
-            "max_tokens": 128
-        }
-
         try:
-            response = requests.post(external_api_url, json=payload)
-            response.raise_for_status()
-        except requests.exceptions.RequestException as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Error calling external API: {str(e)}'
-            }, status=500)
+            # Initialize the Gradio Client with the API URL
+            client = Client(gradio_url)
 
-        try:
-            model_response = response.json()
-        except json.JSONDecodeError as e:
-            return JsonResponse({
-                'status': 'error',
-                'message': f'Invalid JSON response from external API: {str(e)}'
-            }, status=500)
-
-        # Extract the generated code from the response
-        try:
-            if isinstance(model_response, dict) and 'data' in model_response:
-                if isinstance(model_response['data'], list):
-                    generated_code = model_response['data'][0]
-                elif isinstance(model_response['data'], dict) and 'output' in model_response['data']:
-                    generated_code = model_response['data']['output']
-                else:
-                    generated_code = str(model_response['data'])
-            else:
-                generated_code = str(model_response)
+            # Assuming the Gradio app expects "instruction" and "input" as separate inputs
+            result = client.predict(
+                message,  # instruction
+                models_content,  # input
+                128,  # max_tokens (assuming this is also an input)
+                api_name="/predict"  # Replace with the actual API endpoint if different or None for the default
+            )
 
             return JsonResponse({
                 'status': 'success',
-                'message': generated_code
+                'message': result
             }, status=200)
         except Exception as e:
             return JsonResponse({
                 'status': 'error',
-                'message': f'Error processing API response: {str(e)}'
+                'message': f'Error calling Gradio API: {str(e)}'
             }, status=500)
 
     except Exception as e:

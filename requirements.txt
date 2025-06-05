@@ -7,3 +7,4 @@ psycopg2-binary
 mysqlclient #need mysql installed in
 mysql-connector-python
 requests
+gradio_client
