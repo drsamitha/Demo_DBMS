@@ -41,7 +41,6 @@ INSTALLED_APPS = [
     'djongo',
     'Demo_DBMS',
     'db_connections',
-    'debug_toolbar'    
 ]
 
 MIDDLEWARE = [
@@ -52,7 +51,6 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware'
 ]
 
 ROOT_URLCONF = 'Demo_DBMS.urls'
@@ -138,4 +136,3 @@ SESSION_ENGINE = "django.contrib.sessions.backends.db"
 ATOMIC_REQUESTS = False
 
 
-INTERNAL_IPS = ['127.0.0.1']  

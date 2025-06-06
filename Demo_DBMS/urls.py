@@ -22,6 +22,4 @@ import debug_toolbar
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',include('db_connections.urls')),
-    path('__debug__/', include(debug_toolbar.urls)),
-
 ]
