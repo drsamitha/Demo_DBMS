@@ -65,8 +65,20 @@ def orm_console(request):
                 sys.stdout = sys.__stdout__
                 
             except Exception as e:
-                error = str(e)
+                # Get only essential error information
+                error_type = type(e).__name__
+                error_message = str(e)
+                
+                # Format the error message
+                error = f"Error Type: {error_type}\nError Message: {error_message}"
                 traceback.print_exc()
+        
+        # Check if it's an AJAX request
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return JsonResponse({
+                'result': result,
+                'error': error
+            })
     
     return render(request, 'db_connections/orm_console.html', {
         'selected_alias': selected_alias,
@@ -446,6 +458,7 @@ def send_message(request):
         try:
             data = json.loads(request.body)
             message = data.get('message')
+            max_tokens = data.get('max_tokens', 128)  # Default to 128 if not provided
             if not message:
                 return JsonResponse({
                     'status': 'error',
@@ -483,7 +496,7 @@ def send_message(request):
             result = client.predict(
                 message,  # instruction
                 models_content,  # input
-                128,  # max_tokens (assuming this is also an input)
+                max_tokens,  # max_tokens from the request
                 api_name="/predict"  # Replace with the actual API endpoint if different or None for the default
             )
 

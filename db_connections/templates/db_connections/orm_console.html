@@ -12,7 +12,7 @@
                 </div>
             </div>
 
-            <form method="post" class="mb-4">
+            <form method="post" class="mb-4" id="ormForm">
                 {% csrf_token %}
                 <div class="form-group">
                     <div class="d-flex justify-content-between align-items-center mb-2">
@@ -29,16 +29,25 @@
                 </div>
             </form>
 
-            {% if result %}
-            <div class="card mb-4">
+            <div id="resultContainer" class="card mb-4" style="display: none;">
                 <div class="card-header bg-light">
                     <h5 class="mb-0">Result</h5>
                 </div>
                 <div class="card-body">
-                    <pre class="code-block">{{ result }}</pre>
+                    <pre class="code-block" id="resultContent"></pre>
+                    <div id="errorActions" class="mt-3" style="display: none;">
+                        <div class="d-flex align-items-center">
+                            <button type="button" class="button" id="tryAgainBtn">Try Again</button>
+                            <div id="progressIndicator" class="ms-3" style="display: none;">
+                                <div class="spinner-border spinner-border-sm text-primary" role="status">
+                                    <span class="visually-hidden">Loading...</span>
+                                </div>
+                                <span class="ms-2 text-muted">Getting AI help...</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
-            {% endif %}
 
             <!-- Chat Interface Section -->
             <div class="card mb-4">
@@ -50,6 +59,11 @@
                         <!-- Chat messages will appear here -->
                     </div>
                     <form id="chatForm" class="d-flex">
+                        <div class="d-flex align-items-center me-2" style="min-width: 200px;">
+                            <label for="tokenCount" class="me-2 mb-0">Expected Response Length:</label>
+                            <input type="range" class="form-range" id="tokenCount" min="64" max="512" value="128" step="64" style="width: 100px;">
+                            <span id="tokenValue" class="ms-2">128</span>
+                        </div>
                         <input type="text" id="chatInput" class="form-control me-2" placeholder="Type your message..." style="flex-grow: 1;">
                         <button type="submit" class="button">Send</button>
                     </form>
@@ -105,6 +119,117 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
     });
+
+    // Handle ORM form submission
+    const ormForm = document.getElementById('ormForm');
+    ormForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        const formData = new FormData(ormForm);
+        
+        fetch('{% url "orm_console" %}', {
+            method: 'POST',
+            body: formData,
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const errorActions = document.getElementById('errorActions');
+            
+            if (data.error) {
+                // Format the error message with syntax highlighting
+                const errorLines = data.error.split('\n');
+                let formattedError = '';
+                errorLines.forEach(line => {
+                    if (line.startsWith('Error Type:')) {
+                        formattedError += `<span class="text-danger fw-bold">${line}</span>\n`;
+                    } else if (line.startsWith('Error Message:')) {
+                        formattedError += `<span class="text-danger">${line}</span>\n`;
+                    }
+                });
+                resultContent.innerHTML = formattedError;
+                errorActions.style.display = 'block';
+                // Store the error message and code for retry
+                window.lastError = {
+                    error: data.error,
+                    code: editor.getValue()
+                };
+            } else if (data.result) {
+                resultContent.textContent = data.result;
+                errorActions.style.display = 'none';
+            }
+            resultContainer.style.display = 'block';
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            const resultContainer = document.getElementById('resultContainer');
+            const resultContent = document.getElementById('resultContent');
+            const errorActions = document.getElementById('errorActions');
+            resultContent.innerHTML = `<span class="text-danger">Error: ${error.message}</span>`;
+            errorActions.style.display = 'block';
+            resultContainer.style.display = 'block';
+        });
+    });
+
+    // Add token count slider event listener
+    document.getElementById('tokenCount').addEventListener('input', function(e) {
+        document.getElementById('tokenValue').textContent = e.target.value;
+    });
+
+    // Function to handle error retry with AI
+    function handleErrorRetry() {
+        if (!window.lastError) return;
+        
+        const tokenCount = document.getElementById('tokenCount').value;
+        const errorMessage = `I got this error while executing ORM code:\n${window.lastError.error}\n\nHere's the code I tried to run:\n\n${window.lastError.code}\n\ngive only the new ORM to fix this?`;
+        
+        // Show progress indicator and disable button
+        const tryAgainBtn = document.getElementById('tryAgainBtn');
+        const progressIndicator = document.getElementById('progressIndicator');
+        tryAgainBtn.disabled = true;
+        progressIndicator.style.display = 'flex';
+        
+        fetch('/send_message', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify({ 
+                message: errorMessage,
+                max_tokens: parseInt(tokenCount)
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.status === 'success' && data.message) {
+                editor.setValue(data.message);
+                // Hide the error actions after successful retry
+                document.getElementById('errorActions').style.display = 'none';
+            } else {
+                // Show error in result container
+                const resultContent = document.getElementById('resultContent');
+                resultContent.innerHTML = `<span class="text-danger">Error: ${data.message || 'Failed to get AI help'}</span>`;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            // Show error in result container
+            const resultContent = document.getElementById('resultContent');
+            resultContent.innerHTML = `<span class="text-danger">Error: ${error.message || 'Failed to get AI help'}</span>`;
+        })
+        .finally(() => {
+            // Hide progress indicator and enable button
+            tryAgainBtn.disabled = false;
+            progressIndicator.style.display = 'none';
+        });
+    }
+
+    // Add click event listener to Try Again button
+    document.getElementById('tryAgainBtn').addEventListener('click', handleErrorRetry);
 
     // Chat interface functionality
     const chatForm = document.getElementById('chatForm');
