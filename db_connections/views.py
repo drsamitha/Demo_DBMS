@@ -26,7 +26,49 @@ import requests
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 from gradio_client import Client
+import time
+from collections import defaultdict
 
+# Global metrics storage
+system_metrics = {
+    'total_requests': 0,
+    'successful_executions': 0,
+    'failed_executions': 0,
+    'total_execution_time': 0,
+    'execution_times': [],
+    'last_reset': time.time()
+}
+
+def get_system_metrics():
+    """Calculate and return system metrics"""
+    total_requests = system_metrics['total_requests']
+    successful = system_metrics['successful_executions']
+    failed = system_metrics['failed_executions']
+    
+    if total_requests == 0:
+        return {
+            'total_requests': 0,
+            'successful_executions': 0,
+            'failed_executions': 0,
+            'success_rate': 0,
+            'fail_rate': 0,
+            'average_execution_time': 0,
+            'uptime': time.time() - system_metrics['last_reset']
+        }
+    
+    success_rate = (successful / total_requests) * 100
+    fail_rate = (failed / total_requests) * 100
+    avg_time = system_metrics['total_execution_time'] / total_requests if total_requests > 0 else 0
+    
+    return {
+        'total_requests': total_requests,
+        'successful_executions': successful,
+        'failed_executions': failed,
+        'success_rate': round(success_rate, 2),
+        'fail_rate': round(fail_rate, 2),
+        'average_execution_time': round(avg_time, 3),
+        'uptime': round(time.time() - system_metrics['last_reset'], 2)
+    }
 
 # from .connection_context import *
 
@@ -46,10 +88,27 @@ def orm_console(request):
     selected_alias = request.session.get('selected_db', 'default')
     result = None
     error = None
+    warning = None
     
     if request.method == 'POST':
         orm_code = request.POST.get('orm_code', '')
         if orm_code:
+            # Track metrics
+            system_metrics['total_requests'] += 1
+            start_time = time.time()
+            
+            # Check for dangerous keywords
+            dangerous_keywords = ['delete', 'drop', 'truncate', 'remove', 'clear']
+            code_lower = orm_code.lower()
+            found_dangerous = []
+            
+            for keyword in dangerous_keywords:
+                if keyword in code_lower:
+                    found_dangerous.append(keyword)
+            
+            if found_dangerous:
+                warning = f"⚠️ Warning: This code contains potentially dangerous operations: {', '.join(found_dangerous)}. Please review carefully before executing."
+            
             try:
                 # Create a new string buffer to capture print output
                 output_buffer = StringIO()
@@ -64,7 +123,19 @@ def orm_console(request):
                 # Restore stdout
                 sys.stdout = sys.__stdout__
                 
+                # Track successful execution
+                system_metrics['successful_executions'] += 1
+                execution_time = time.time() - start_time
+                system_metrics['total_execution_time'] += execution_time
+                system_metrics['execution_times'].append(execution_time)
+                
             except Exception as e:
+                # Track failed execution
+                system_metrics['failed_executions'] += 1
+                execution_time = time.time() - start_time
+                system_metrics['total_execution_time'] += execution_time
+                system_metrics['execution_times'].append(execution_time)
+                
                 # Get only essential error information
                 error_type = type(e).__name__
                 error_message = str(e)
@@ -77,14 +148,18 @@ def orm_console(request):
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return JsonResponse({
                 'result': result,
-                'error': error
+                'error': error,
+                'warning': warning,
+                'metrics': get_system_metrics()
             })
     
     return render(request, 'db_connections/orm_console.html', {
         'selected_alias': selected_alias,
         'result': result,
         'error': error,
-        'orm_code': request.POST.get('orm_code', '') if request.method == 'POST' else ''
+        'warning': warning,
+        'orm_code': request.POST.get('orm_code', '') if request.method == 'POST' else '',
+        'metrics': get_system_metrics()
     })
 
 
