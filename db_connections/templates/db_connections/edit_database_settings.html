@@ -72,7 +72,23 @@
         "CONN_MAX_AGE": 0,
         "CONN_HEALTH_CHECKS": False,
         "OPTIONS": {}
-    }
+    },
+
+
+    'Mongodb': {
+            'ENGINE': 'djongo',
+        'NAME': 'django_mongodb',
+        'ENFORCE_SCHEMA': False,
+        'CLIENT': {
+            'host': 'localhost',
+            'port': 27018,
+            'username': '',
+            'password': '',
+        }
+    },
+
+    
+
 }</pre>
                 </div>
             </div>

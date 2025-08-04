@@ -78,12 +78,15 @@ WSGI_APPLICATION = 'Demo_DBMS.wsgi.application'
 
 DATABASES = {
     "default": {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': 'db.sqlite3',
-        'USER': '',
-        'PASSWORD': '',
-        'HOST': '',
-        'PORT': '',
+        'ENGINE': 'djongo',
+        'NAME': 'django_mongodb',
+        'ENFORCE_SCHEMA': False,  
+        'CLIENT': {
+            'host': 'localhost',
+            'port': 27018,
+            'username': 'admin',
+            'password': 'password',
+        }
     }
 }
 
